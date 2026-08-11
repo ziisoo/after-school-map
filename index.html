@@ -202,9 +202,19 @@ function fitKorea(){
   map.fitBounds(layer.getBounds(), {padding:[10,10]});
   return true;
 }
+// 새 탭(백그라운드)으로 열면 로드 시점에 크기가 0이고 ResizeObserver도 안 돌아서
+// 탭이 보이는 시점·로드 완료 시점에도 다시 시도한다
 if(!fitKorea()){
-  const ro = new ResizeObserver(()=>{ if(fitKorea()) ro.disconnect(); });
+  const retry = ()=>{
+    if(!fitKorea()) return;
+    ro.disconnect();
+    document.removeEventListener('visibilitychange', retry);
+    window.removeEventListener('load', retry);
+  };
+  const ro = new ResizeObserver(retry);
   ro.observe(document.getElementById('map'));
+  document.addEventListener('visibilitychange', retry);
+  window.addEventListener('load', retry);
 }
 window.addEventListener('resize', ()=>map.invalidateSize());
 ensureHatch();
