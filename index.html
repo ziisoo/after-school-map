@@ -194,7 +194,19 @@ const layer = L.geoJSON(GEO, {
     ly.on('mouseout', () => { if(ly!==selected){ const d=DATA.deadzone&&DATA.deadzone.includes(f.properties.key); ly.setStyle({weight:d?2.2:.7, color:d?'#D4562F':'#FFFFFF'}); } });
   }
 }).addTo(map);
-map.fitBounds(layer.getBounds(), {padding:[10,10]});
+// 지도칸 크기가 0인 채로 초기화되면 fitBounds가 NaN을 만들어 지도가 빈 화면이 된다
+function fitKorea(){
+  map.invalidateSize();
+  const s = map.getSize();
+  if(!s.x || !s.y) return false;
+  map.fitBounds(layer.getBounds(), {padding:[10,10]});
+  return true;
+}
+if(!fitKorea()){
+  const ro = new ResizeObserver(()=>{ if(fitKorea()) ro.disconnect(); });
+  ro.observe(document.getElementById('map'));
+}
+window.addEventListener('resize', ()=>map.invalidateSize());
 ensureHatch();
 map.on('layeradd', ensureHatch);
 
